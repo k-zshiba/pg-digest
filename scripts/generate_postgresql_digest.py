@@ -223,12 +223,13 @@ def generate_digest(
     else:
         raise RuntimeError(f"Unsupported llm_cli: {llm_cli}")
 
+    timeout = int(os.getenv("DIGEST_LLM_TIMEOUT", "600"))
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=timeout,
         )
     except FileNotFoundError as err:
         raise RuntimeError(
@@ -236,9 +237,9 @@ def generate_digest(
         ) from err
     except subprocess.TimeoutExpired:
         if llm_cli == "gemini":
-            print("gemini CLIがタイムアウトしました。SDK経由でフォールバックします。", file=sys.stderr)
+            print(f"gemini CLIがタイムアウトしました（{timeout}秒）。SDK経由でフォールバックします。", file=sys.stderr)
             return generate_with_gemini_sdk(user_prompt, system)
-        raise RuntimeError(f"{llm_cli} CLI がタイムアウトしました（300秒）")
+        raise RuntimeError(f"{llm_cli} CLI がタイムアウトしました（{timeout}秒）")
 
     if result.returncode != 0:
         raise RuntimeError(f"{llm_cli} CLI error: {result.stderr.strip()}")

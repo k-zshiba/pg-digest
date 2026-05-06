@@ -83,11 +83,12 @@ def generate_digest(stories: list[dict], date: datetime, llm_cli: str) -> str:
     else:
         raise RuntimeError(f"Unsupported llm_cli: {llm_cli}")
 
+    timeout = int(os.getenv("DIGEST_LLM_TIMEOUT", "600"))
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=timeout,
     )
 
     if result.returncode != 0:

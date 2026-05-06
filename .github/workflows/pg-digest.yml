@@ -60,6 +60,7 @@ jobs:
       - name: Generate PostgreSQL digest
         env:
           DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'gemini' }}
+          DIGEST_LLM_TIMEOUT: ${{ vars.DIGEST_LLM_TIMEOUT || '600' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
