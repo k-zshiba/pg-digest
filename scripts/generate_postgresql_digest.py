@@ -38,7 +38,7 @@ def resolve_postgresql_llm_cli(cli_arg: str | None) -> str:
             return "gemini"
         raise err
 
-def generate_with_gemini_sdk(prompt: str, system: str) -> str:
+def generate_with_gemini_sdk(prompt: str, system: str, model: str | None = None) -> str:
     try:
         import google.generativeai as genai
     except ImportError as err:
@@ -51,9 +51,10 @@ def generate_with_gemini_sdk(prompt: str, system: str) -> str:
         raise RuntimeError("GEMINI_API_KEY が未設定です。")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model_name = model or "gemini-2.0-flash"
+    sdk_model = genai.GenerativeModel(model_name)
     try:
-        response = model.generate_content(f"{system}\n\n{prompt}")
+        response = sdk_model.generate_content(f"{system}\n\n{prompt}")
     except Exception as err:
         raise RuntimeError(f"Gemini SDK error: {err}") from err
 
@@ -176,6 +177,7 @@ def generate_digest(
     commits_section: str,
     date: datetime,
     llm_cli: str,
+    model: str | None = None,
 ) -> str:
     date_ja = date.strftime("%Y年%m月%d日")
     date_str = date.strftime("%Y-%m-%d")
@@ -211,15 +213,21 @@ def generate_digest(
 
     if llm_cli == "claude":
         cmd = [llm_cli, "-p", user_prompt, "--system-prompt", system]
+        if model:
+            cmd += ["--model", model]
     elif llm_cli == "codex":
         merged_prompt = f"{system}\n\n{user_prompt}"
         cmd = [llm_cli, "exec", merged_prompt]
+        if model:
+            cmd = [llm_cli, "-m", model, "exec", merged_prompt]
     elif llm_cli == "gemini":
         merged_prompt = f"{system}\n\n{user_prompt}"
         if shutil.which("gemini"):
             cmd = [llm_cli, "--skip-trust", "-p", merged_prompt]
+            if model:
+                cmd += ["--model", model]
         else:
-            return generate_with_gemini_sdk(user_prompt, system)
+            return generate_with_gemini_sdk(user_prompt, system, model)
     else:
         raise RuntimeError(f"Unsupported llm_cli: {llm_cli}")
 
@@ -238,7 +246,7 @@ def generate_digest(
     except subprocess.TimeoutExpired:
         if llm_cli == "gemini":
             print(f"gemini CLIがタイムアウトしました（{timeout}秒）。SDK経由でフォールバックします。", file=sys.stderr)
-            return generate_with_gemini_sdk(user_prompt, system)
+            return generate_with_gemini_sdk(user_prompt, system, model)
         raise RuntimeError(f"{llm_cli} CLI がタイムアウトしました（{timeout}秒）")
 
     if result.returncode != 0:
@@ -288,6 +296,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("date", nargs="?", help="Target date in YYYY-MM-DD format")
     parser.add_argument("--llm-cli", choices=["claude", "codex", "gemini"])
+    parser.add_argument("--model", help="Model name to use (e.g. sonnet, gemini-2.0-flash, o3)")
     return parser.parse_args()
 
 
@@ -348,9 +357,10 @@ def main() -> None:
     print("  [3/3] Fetching mailing list discussions...")
     commits_section = build_commits_section(commits)
 
-    print(f"Generating digest with {llm_cli}...")
+    model = args.model or os.getenv("DIGEST_LLM_MODEL")
+    print(f"Generating digest with {llm_cli}{f' ({model})' if model else ''}...")
     try:
-        digest = generate_digest(hn_stories, commits, commits_section, date, llm_cli)
+        digest = generate_digest(hn_stories, commits, commits_section, date, llm_cli, model)
     except RuntimeError as err:
         message = str(err)
         if llm_cli == "gemini" and any(token in message.lower() for token in ("quota", "resource_exhausted", "429")):
