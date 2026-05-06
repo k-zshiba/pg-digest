@@ -47,7 +47,7 @@ def build_stories_text(stories: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def generate_digest(stories: list[dict], date: datetime, llm_cli: str) -> str:
+def generate_digest(stories: list[dict], date: datetime, llm_cli: str, model: str | None = None) -> str:
     date_ja = date.strftime("%Y年%m月%d日")
     date_str = date.strftime("%Y-%m-%d")
     stories_text = build_stories_text(stories)
@@ -74,12 +74,18 @@ def generate_digest(stories: list[dict], date: datetime, llm_cli: str) -> str:
 
     if llm_cli == "claude":
         cmd = [llm_cli, "-p", user_prompt, "--system-prompt", system]
+        if model:
+            cmd += ["--model", model]
     elif llm_cli == "codex":
         merged_prompt = f"{system}\n\n{user_prompt}"
         cmd = [llm_cli, "exec", merged_prompt]
+        if model:
+            cmd = [llm_cli, "-m", model, "exec", merged_prompt]
     elif llm_cli == "gemini":
         merged_prompt = f"{system}\n\n{user_prompt}"
         cmd = [llm_cli, "--skip-trust", "-p", merged_prompt]
+        if model:
+            cmd += ["--model", model]
     else:
         raise RuntimeError(f"Unsupported llm_cli: {llm_cli}")
 
@@ -151,12 +157,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("date", nargs="?", help="Target date in YYYY-MM-DD format")
     parser.add_argument("--llm-cli", choices=["claude", "codex", "gemini"])
+    parser.add_argument("--model", help="Model name to use (e.g. sonnet, gemini-2.0-flash, o3)")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     llm_cli = resolve_llm_cli(args.llm_cli)
+    model = args.model or os.getenv("DIGEST_LLM_MODEL")
     if args.date:
         try:
             date = datetime.strptime(args.date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
@@ -173,7 +181,7 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Found {len(stories)} stories. Generating digest with {llm_cli}...")
-    digest = generate_digest(stories, date, llm_cli)
+    digest = generate_digest(stories, date, llm_cli, model)
 
     output_file = save_digest(digest, date)
     update_index(date)

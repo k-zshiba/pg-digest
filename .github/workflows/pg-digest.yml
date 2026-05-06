@@ -10,6 +10,9 @@ on:
         description: "LLM CLI (claude / codex / gemini)"
         required: false
         default: "gemini"
+      model:
+        description: "Model name (e.g. sonnet, gemini-2.0-flash, o3)"
+        required: false
 
 jobs:
   generate:
@@ -60,6 +63,7 @@ jobs:
       - name: Generate PostgreSQL digest
         env:
           DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'gemini' }}
+          DIGEST_LLM_MODEL: ${{ github.event.inputs.model || vars.DIGEST_LLM_MODEL }}
           DIGEST_LLM_TIMEOUT: ${{ vars.DIGEST_LLM_TIMEOUT || '600' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
