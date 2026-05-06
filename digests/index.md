@@ -1,0 +1,6 @@
+# PostgreSQL News Digest
+
+Hacker News・GitHub・メーリングリストをもとに毎日自動生成されるPostgreSQL向けニュースダイジェストです。
+
+- [2026-05-01](./2026-05-01.md)
+- [2026-04-30](./2026-04-30.md)
