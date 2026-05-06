@@ -33,8 +33,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install claude CLI
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Install LLM CLI
+        env:
+          DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'gemini' }}
+        run: |
+          case "$DIGEST_LLM_CLI" in
+            claude)
+              npm install -g @anthropic-ai/claude-code
+              ;;
+            gemini)
+              npm install -g @google/gemini-cli
+              ;;
+            codex)
+              npm install -g @openai/codex
+              ;;
+            *)
+              echo "Unknown LLM CLI: $DIGEST_LLM_CLI" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Compute digest date
         id: date
@@ -42,7 +59,7 @@ jobs:
 
       - name: Generate PostgreSQL digest
         env:
-          DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'claude' }}
+          DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'gemini' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
