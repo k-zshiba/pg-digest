@@ -1,0 +1,5 @@
+site_name: PostgreSQL News Digest
+site_description: Hacker News・GitHub・メーリングリストをもとに毎日自動生成されるPostgreSQLニュースダイジェスト
+docs_dir: digests
+theme:
+  name: mkdocs
