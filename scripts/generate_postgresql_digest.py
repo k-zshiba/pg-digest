@@ -217,7 +217,7 @@ def generate_digest(
     elif llm_cli == "gemini":
         merged_prompt = f"{system}\n\n{user_prompt}"
         if shutil.which("gemini"):
-            cmd = [llm_cli, "-p", merged_prompt]
+            cmd = [llm_cli, "--skip-trust", "-p", merged_prompt]
         else:
             return generate_with_gemini_sdk(user_prompt, system)
     else:

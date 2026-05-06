@@ -79,7 +79,7 @@ def generate_digest(stories: list[dict], date: datetime, llm_cli: str) -> str:
         cmd = [llm_cli, "exec", merged_prompt]
     elif llm_cli == "gemini":
         merged_prompt = f"{system}\n\n{user_prompt}"
-        cmd = [llm_cli, "-p", merged_prompt]
+        cmd = [llm_cli, "--skip-trust", "-p", merged_prompt]
     else:
         raise RuntimeError(f"Unsupported llm_cli: {llm_cli}")
 
