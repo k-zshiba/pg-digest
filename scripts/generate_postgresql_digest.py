@@ -228,12 +228,17 @@ def generate_digest(
             cmd,
             capture_output=True,
             text=True,
-            timeout=180,
+            timeout=300,
         )
     except FileNotFoundError as err:
         raise RuntimeError(
             f"{llm_cli} CLIが見つかりません。PATHに存在するか確認してください。 ({err})"
         ) from err
+    except subprocess.TimeoutExpired:
+        if llm_cli == "gemini":
+            print("gemini CLIがタイムアウトしました。SDK経由でフォールバックします。", file=sys.stderr)
+            return generate_with_gemini_sdk(user_prompt, system)
+        raise RuntimeError(f"{llm_cli} CLI がタイムアウトしました（300秒）")
 
     if result.returncode != 0:
         raise RuntimeError(f"{llm_cli} CLI error: {result.stderr.strip()}")
