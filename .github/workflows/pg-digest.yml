@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       llm_cli:
-        description: "LLM CLI (codex / claude / gemini)"
+        description: "LLM CLI (claude / codex / gemini)"
         required: false
-        default: "codex"
+        default: "gemini"
 
 jobs:
   generate:
@@ -33,9 +33,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Compute digest date
+        id: date
+        run: echo "value=$(date -u -d 'yesterday' +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
       - name: Generate PostgreSQL digest
         env:
-          DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'codex' }}
+          DIGEST_LLM_CLI: ${{ github.event.inputs.llm_cli || vars.DIGEST_LLM_CLI || 'claude' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -47,14 +54,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
-          branch: chore/pg-digest-${{ github.run_id }}
+          branch: chore/pg-digest-${{ steps.date.outputs.value }}
           delete-branch: true
-          commit-message: "Add PostgreSQL digest"
-          title: "Add PostgreSQL digest"
+          commit-message: "Add PostgreSQL digest for ${{ steps.date.outputs.value }}"
+          title: "Add PostgreSQL digest for ${{ steps.date.outputs.value }}"
           body: |
             This PR is automatically created by the PostgreSQL digest workflow.
 
             - Generated digest updates in `digests/`
+            - Digest date: `${{ steps.date.outputs.value }}`
             - Triggered by workflow run: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
           add-paths: |
             digests/*.md
