@@ -67,6 +67,13 @@ jobs:
         run: |
           python scripts/generate_postgresql_digest.py
 
+      - name: Commit digest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add digests/*.md
+          git diff --cached --quiet || git commit -m "${{ steps.date.outputs.value }}"
+
       - name: Create pull request to main
         uses: peter-evans/create-pull-request@v7
         with:
@@ -74,7 +81,6 @@ jobs:
           base: main
           branch: chore/pg-digest-${{ steps.date.outputs.value }}
           delete-branch: true
-          commit-message: "Add PostgreSQL digest for ${{ steps.date.outputs.value }}"
           title: "Add PostgreSQL digest for ${{ steps.date.outputs.value }}"
           body: |
             This PR is automatically created by the PostgreSQL digest workflow.
@@ -82,5 +88,3 @@ jobs:
             - Generated digest updates in `digests/`
             - Digest date: `${{ steps.date.outputs.value }}`
             - Triggered by workflow run: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
-          add-paths: |
-            digests/*.md
