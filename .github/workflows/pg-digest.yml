@@ -9,7 +9,7 @@ on:
       llm_cli:
         description: "LLM CLI (claude / codex / gemini)"
         required: false
-        default: "claude"
+        default: "gemini"
 
 jobs:
   generate:
