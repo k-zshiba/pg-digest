@@ -2,8 +2,8 @@ name: PostgreSQL Digest
 
 on:
   schedule:
-    # JST 07:00 = UTC 22:00 (previous day)
-    - cron: '0 22 * * *'
+    - cron: '0 7 * * *'
+      timezone: 'Asia/Tokyo'
   workflow_dispatch:
     inputs:
       llm_cli:
@@ -56,9 +56,11 @@ jobs:
               ;;
           esac
 
-      - name: Compute digest date
+      - name: Compute digest date (JST)
         id: date
-        run: echo "value=$(date -u -d 'yesterday' +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+        env:
+          TZ: Asia/Tokyo
+        run: echo "value=$(date -d 'yesterday' +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
       - name: Generate PostgreSQL digest
         env:
@@ -69,7 +71,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python scripts/generate_postgresql_digest.py
+          python scripts/generate_postgresql_digest.py "${{ steps.date.outputs.value }}"
 
       - name: Create pull request to main
         uses: peter-evans/create-pull-request@v7
