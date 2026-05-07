@@ -401,8 +401,10 @@ def main() -> None:
         )
         sys.exit(1)
     if not hn_stories:
-        print("該当日にPostgreSQLのストーリーが見つかりませんでした。", file=sys.stderr)
-        sys.exit(1)
+        print(
+            "該当日にPostgreSQLのストーリーが見つからなかったため、コミットのみでダイジェストを生成します。",
+            file=sys.stderr,
+        )
 
     print("  [3/3] Fetching mailing list discussions...")
     commits_section = build_commits_section(commits)
