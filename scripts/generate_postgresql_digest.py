@@ -80,7 +80,6 @@ def fetch_hn_stories(date: datetime) -> list[dict]:
 
 def fetch_pg_commits(date: datetime) -> list[dict]:
     date_str = date.strftime("%Y-%m-%d")
-    no_data_dates = no_data_dates or set()
     params = {
         "since": f"{date_str}T00:00:00Z",
         "until": f"{date_str}T23:59:59Z",
