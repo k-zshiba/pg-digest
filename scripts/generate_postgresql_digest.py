@@ -80,6 +80,7 @@ def fetch_hn_stories(date: datetime) -> list[dict]:
 
 def fetch_pg_commits(date: datetime) -> list[dict]:
     date_str = date.strftime("%Y-%m-%d")
+    no_data_dates = no_data_dates or set()
     params = {
         "since": f"{date_str}T00:00:00Z",
         "until": f"{date_str}T23:59:59Z",
@@ -181,6 +182,7 @@ def generate_digest(
 ) -> str:
     date_ja = date.strftime("%Y年%m月%d日")
     date_str = date.strftime("%Y-%m-%d")
+    no_data_dates = no_data_dates or set()
 
     hn_text = build_stories_text(hn_stories) if hn_stories else "（この日のHNストーリーはありません）"
 
@@ -324,6 +326,7 @@ def generate_digest_en(
     model: str | None = None,
 ) -> str:
     date_str = date.strftime("%Y-%m-%d")
+    no_data_dates = no_data_dates or set()
     date_en = date.strftime("%B %d, %Y")
 
     hn_text = build_stories_text(hn_stories) if hn_stories else "(No HN stories for this day)"
@@ -478,10 +481,11 @@ def _month_header_en(year: int, month: int) -> str:
     return f"## {_MONTH_NAMES_EN[month]} {year}"
 
 
-def update_index(date: datetime) -> None:
+def update_index(date: datetime, no_data_dates: set[str] | None = None) -> None:
     index_path = "digests/index.md"
     index_en_path = "digests/index_en.md"
     date_str = date.strftime("%Y-%m-%d")
+    no_data_dates = no_data_dates or set()
 
     # Collect existing date strings from JA index (match new link format ./ja/YYYY-MM/YYYY-MM-DD.md)
     dates: list[str] = [date_str]
@@ -513,7 +517,10 @@ def update_index(date: datetime) -> None:
         year, month = int(ym.split("-")[0]), int(ym.split("-")[1])
         ja_sections.append(_month_header_ja(year, month))
         for d in months[ym]:
-            ja_sections.append(f"- [{d}](./ja/{ym}/{d}.md)")
+            if d in no_data_dates:
+                ja_sections.append(f"- {d}（HNの記事とコミットがない）")
+            else:
+                ja_sections.append(f"- [{d}](./ja/{ym}/{d}.md)")
         ja_sections.append("")
 
     with open(index_path, "w", encoding="utf-8") as f:
@@ -530,7 +537,10 @@ def update_index(date: datetime) -> None:
         year, month = int(ym.split("-")[0]), int(ym.split("-")[1])
         en_sections.append(_month_header_en(year, month))
         for d in months[ym]:
-            en_sections.append(f"- [{d}](./en/{ym}/{d}.md)")
+            if d in no_data_dates:
+                en_sections.append(f"- {d} (No HN stories or commits)")
+            else:
+                en_sections.append(f"- [{d}](./en/{ym}/{d}.md)")
         en_sections.append("")
 
     with open(index_en_path, "w", encoding="utf-8") as f:
@@ -590,10 +600,11 @@ def main() -> None:
 
     if not hn_stories and not commits:
         print(
-            "該当日にPostgreSQLのストーリー/コミットが見つかりませんでした。",
+            "該当日にPostgreSQLのストーリー/コミットが見つかりませんでした。インデックスに記録して終了します。",
             file=sys.stderr,
         )
-        sys.exit(1)
+        update_index(date, no_data_dates={date_str})
+        sys.exit(0)
     if not hn_stories:
         print(
             "該当日にPostgreSQLのストーリーが見つからなかったため、コミットのみでダイジェストを生成します。",
