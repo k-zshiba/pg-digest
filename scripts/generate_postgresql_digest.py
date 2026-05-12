@@ -324,7 +324,6 @@ def generate_digest_en(
     model: str | None = None,
 ) -> str:
     date_str = date.strftime("%Y-%m-%d")
-    no_data_dates = no_data_dates or set()
     date_en = date.strftime("%B %d, %Y")
 
     hn_text = build_stories_text(hn_stories) if hn_stories else "(No HN stories for this day)"
