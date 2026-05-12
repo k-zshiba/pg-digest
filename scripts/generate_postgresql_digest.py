@@ -181,7 +181,6 @@ def generate_digest(
 ) -> str:
     date_ja = date.strftime("%Y年%m月%d日")
     date_str = date.strftime("%Y-%m-%d")
-    no_data_dates = no_data_dates or set()
 
     hn_text = build_stories_text(hn_stories) if hn_stories else "（この日のHNストーリーはありません）"
 
