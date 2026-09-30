@@ -5,6 +5,7 @@
 A daily auto-generated PostgreSQL news digest based on Hacker News, GitHub, and mailing lists.
 
 ## July 2026
+- [2026-07-21](./en/2026-07/2026-07-21.md)
 - [2026-07-20](./en/2026-07/2026-07-20.md)
 - [2026-07-19](./en/2026-07/2026-07-19.md)
 - [2026-07-17](./en/2026-07/2026-07-17.md)
