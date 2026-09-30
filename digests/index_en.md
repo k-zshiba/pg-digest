@@ -5,6 +5,7 @@
 A daily auto-generated PostgreSQL news digest based on Hacker News, GitHub, and mailing lists.
 
 ## September 2026
+- [2026-09-27](./en/2026-09/2026-09-27.md)
 - [2026-09-26](./en/2026-09/2026-09-26.md)
 - [2026-09-25](./en/2026-09/2026-09-25.md)
 - [2026-09-24](./en/2026-09/2026-09-24.md)
